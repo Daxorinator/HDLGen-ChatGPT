@@ -848,18 +848,20 @@ class Generator(QWidget):
                     dir = dir.replace("/VHDL/model/" + namedir[0] + ".vhd",
                                       "/" + lang + "/model/" + namedir[0] + "." + ext)
 
-                    if not os.path.exists(ProjectManager.get_proj_environment() + dir):
-                        print(ProjectManager.get_proj_environment() + dir + " Does not exist")
+                    if not os.path.exists(
+                        os.path.join(ProjectManager.get_proj_environment(), dir)
+                    ):
+                        print(str(ProjectManager.get_proj_environment()) + dir + " does not exist")
                         msgBox = QMessageBox()
                         msgBox.setWindowTitle("Alert")
-                        msgBox.setText(ProjectManager.get_proj_environment() + dir + "\nDoes not exist")
+                        msgBox.setText(str(ProjectManager.get_proj_environment()) + dir + "\nDoes not exist")
                         msgBox.exec_()
                     self.dirs.append(dir)
                     directories = dir.split('/')
 
                     # Remove the last two elements (folders)
                     dir = '/'.join(directories[:-3])
-                    hdlgenDir = ProjectManager.get_proj_environment() + dir + "/HDLgenPrj/" + namedir[0] + ".hdlgen"
+                    hdlgenDir = str(ProjectManager.get_proj_environment()) + dir + "/HDLgenPrj/" + namedir[0] + ".hdlgen"
                     modelRoot = minidom.parse(hdlgenDir)
                     modelHDLGen = modelRoot.documentElement
                     modelHdlDesign = modelHDLGen.getElementsByTagName("hdlDesign")
@@ -874,7 +876,7 @@ class Generator(QWidget):
                 break
         if self.dirs is not None:
             for dir in self.dirs:
-                files += "add_files -norecurse  " + ProjectManager.get_proj_environment() + dir + " \n"
+                files += "add_files -norecurse  " + str(ProjectManager.get_proj_environment()) + dir + " \n"
             tcl_vivado_code = tcl_vivado_code.replace("$files", files)
         else:
             tcl_vivado_code = tcl_vivado_code.replace("$files", "")
@@ -1087,7 +1089,7 @@ class Generator(QWidget):
                             # If an input signal is found, add the VHDL to set that input to the corrosponding value in the test table
                             testbench_code += "\t{row} <= {if_statement};\n".format(
                                 row = row[0],
-                                if_statement = ("x\"" + row[test+3] + "\"") if row[3] == "hex" else ("'" + row[test + 3] + "'")
+                                if_statement = ("x\"" + row[test+3] + "\"") if row[3] == "hex" else ("\"" + row[test + 3] + "\"")
                             )
 
                     # Add the wait statement, inserting the delay value for the test being assembled
@@ -1096,7 +1098,7 @@ class Generator(QWidget):
                     # Loop over each row in the testbench_table, and check if the 2nd entry is 
                     for _, row in enumerate(self.testbench_table):
                         if row[1] == "out":
-                            testbench_code += "assert {row} = {if_statement} report \"TestNo {testNo} {row} mismatch\" severity warning;\n".format(
+                            testbench_code += "\tassert {row} = {if_statement} report \"TestNo {testNo} {row} mismatch\" severity warning;\n".format(
                                 row = row[0],
                                 if_statement = ("x\"" + row[test+3] + "\"") if row[3] == "hex" else ("'" + row[test+3] + "'"),
                                 testNo = test
@@ -2759,7 +2761,7 @@ class Generator(QWidget):
     def create_verilog_testbench_file(self, filesNumber):
         proj_name = ProjectManager.get_proj_name()
         proj_path = os.path.join(ProjectManager.get_proj_dir(), proj_name)
-        root = minidom.parse(proj_path + "/HDLGenPrj/" + proj_name + ".hdlgen")
+        root = minidom.parse(ProjectManager.get_proj_hdlgen())
         HDLGen = root.documentElement
         hdlDesign = HDLGen.getElementsByTagName("hdlDesign")
         testbench_node = hdlDesign[0].getElementsByTagName('testbench')
